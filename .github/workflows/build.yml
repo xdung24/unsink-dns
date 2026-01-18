@@ -78,12 +78,12 @@ jobs:
 
       - name: Package (Windows)
         if: matrix.goos == 'windows'
-        shell: pwsh
+        shell: bash
         run: |
-          $out = "${{ matrix.filename }}${{ matrix.ext }}"
-          $zip = "${{ matrix.filename }}.zip"
-          Write-Host "Packaging $zip (includes .bat files)"
-          Compress-Archive -Path $out, '*.bat' -DestinationPath $zip -Force
+          out="${{ matrix.filename }}${{ matrix.ext }}"
+          zip="${{ matrix.filename }}.zip"
+          echo "Packaging $zip (includes .bat files)"
+          powershell -command "Compress-Archive -Path '$out', '*.bat' -DestinationPath '$zip' -Force"
 
       - name: Upload artifact (Linux)
         if: matrix.goos == 'linux'
