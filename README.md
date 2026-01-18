@@ -84,3 +84,6 @@ Currently, the upstream server is hardcoded to Cloudflare (1.1.1.1:853). To chan
 
 - `github.com/miekg/dns`
 - `github.com/kardianos/service`
+
+## Known issues
+- If you run app as service, and only localhost can connect to DNS server, that mean the firewall is blocking app. In order to allow other computer to connect to the unsink-dns, you will need to unblock incomning connection in firewall
