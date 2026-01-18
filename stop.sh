@@ -1,2 +1,2 @@
 #!/bin/bash
-sudo ./unsink-dns --stop
+sudo ./unsinkdns --stop

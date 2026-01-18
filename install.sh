@@ -1,2 +1,2 @@
 #!/bin/bash
-sudo ./unsink-dns --install
+sudo ./unsinkdns --install

@@ -1,2 +1,2 @@
 #!/bin/bash
-sudo ./unsink-dns --remove
+sudo ./unsinkdns --remove

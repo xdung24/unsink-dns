@@ -1,0 +1,100 @@
+name: Build Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            goos: linux
+            goarch: amd64
+            filename: unsinkdns-linux-x64
+            ext: ""
+          - runner: ubuntu-latest
+            goos: linux
+            goarch: 386
+            filename: unsinkdns-linux-x86
+            ext: ""
+          - runner: ubuntu-latest
+            goos: linux
+            goarch: arm64
+            filename: unsinkdns-linux-arm64
+            ext: ""
+          - runner: ubuntu-latest
+            goos: linux
+            goarch: arm
+            goarm: '7'
+            filename: unsinkdns-linux-armv7
+            ext: ""
+          - runner: windows-latest
+            goos: windows
+            goarch: amd64
+            filename: unsinkdns-windows-x64
+            ext: .exe
+          - runner: windows-latest
+            goos: windows
+            goarch: 386
+            filename: unsinkdns-windows-x86
+            ext: .exe
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+
+      - name: Build
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: '0'
+          GOARM: ${{ matrix.goarm }}
+        run: |
+          out="${{ matrix.filename }}${{ matrix.ext }}"
+          echo "Building $out (GOOS=$GOOS GOARCH=$GOARCH GOARM=$GOARM)"
+          go build -o "$out"
+
+      - name: Package (Linux)
+        if: matrix.goos == 'linux'
+        run: |
+          out="${{ matrix.filename }}${{ matrix.ext }}"
+          tarname="${{ matrix.filename }}.tar.gz"
+          echo "Packaging $tarname (includes .sh files)"
+          tar -czf "$tarname" "$out" *.sh
+
+      - name: Package (Windows)
+        if: matrix.goos == 'windows'
+        shell: pwsh
+        run: |
+          $out = "${{ matrix.filename }}${{ matrix.ext }}"
+          $zip = "${{ matrix.filename }}.zip"
+          Write-Host "Packaging $zip (includes .bat files)"
+          Compress-Archive -Path $out, '*.bat' -DestinationPath $zip -Force
+
+      - name: Upload artifact (Linux)
+        if: matrix.goos == 'linux'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: "${{ matrix.filename }}.tar.gz"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifact (Windows)
+        if: matrix.goos == 'windows'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: "${{ matrix.filename }}.zip"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

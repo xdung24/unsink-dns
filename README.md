@@ -13,12 +13,12 @@ A DNS-over-TLS proxy server that caches responses and forwards queries to Cloudf
 
 ### For Windows
 ```bash
-go build -o unsink-dns.exe
+go build -o unsinkdns.exe
 ```
 
 ### For Linux
 ```bash
-GOOS=linux GOARCH=amd64 go build -o unsink-dns
+GOOS=linux GOARCH=amd64 go build -o unsinkdns
 ```
 
 ## Installation as Service
@@ -27,7 +27,7 @@ The application uses the `github.com/kardianos/service` package to run as a syst
 
 ### Windows
 
-1. Build the executable: `go build -o unsink-dns.exe`
+1. Build the executable: `go build -o unsinkdns.exe`
 2. Use the provided batch files in the `scripts/` directory (run as Administrator or they will prompt):
    - Install: `scripts\install.bat`
    - Start: `scripts\start.bat`
@@ -35,15 +35,15 @@ The application uses the `github.com/kardianos/service` package to run as a syst
    - Remove: `scripts\remove.bat`
 
 Alternatively, manual commands:
-- Install: `unsink-dns.exe --install`
-- Start: `unsink-dns.exe --start`
-- Stop: `unsink-dns.exe --stop`
-- Remove: `unsink-dns.exe --remove`
+- Install: `unsinkdns.exe --install`
+- Start: `unsinkdns.exe --start`
+- Stop: `unsinkdns.exe --stop`
+- Remove: `unsinkdns.exe --remove`
 
 ### Linux
 
-1. Build the executable: `GOOS=linux GOARCH=amd64 go build -o unsink-dns`
-2. Copy the binary to `/usr/local/bin/` or a suitable location: `sudo cp unsink-dns /usr/local/bin/`
+1. Build the executable: `GOOS=linux GOARCH=amd64 go build -o unsinkdns`
+2. Copy the binary to `/usr/local/bin/` or a suitable location: `sudo cp unsinkdns /usr/local/bin/`
 3. Use the provided shell scripts in the `scripts/` directory (they use sudo):
    - Install: `./scripts/install.sh`
    - Start: `./scripts/start.sh`
@@ -51,10 +51,10 @@ Alternatively, manual commands:
    - Remove: `./scripts/remove.sh`
 
 Alternatively, manual commands:
-- Install: `sudo unsink-dns --install`
-- Start: `sudo unsink-dns --start`
-- Stop: `sudo unsink-dns --stop`
-- Remove: `sudo unsink-dns --remove`
+- Install: `sudo unsinkdns --install`
+- Start: `sudo unsinkdns --start`
+- Stop: `sudo unsinkdns --stop`
+- Remove: `sudo unsinkdns --remove`
 
 Note: On Linux, you may need to configure systemd or other init systems if the service package doesn't handle it automatically. The `kardianos/service` package supports systemd on Linux.
 
@@ -63,10 +63,10 @@ Note: On Linux, you may need to configure systemd or other init systems if the s
 To run the application manually (not as a service):
 
 ```bash
-./unsink-dns
+./unsinkdns
 ```
 
-Or on Windows: `unsink-dns.exe`
+Or on Windows: `unsinkdns.exe`
 
 The server will listen on UDP port 53.
 
