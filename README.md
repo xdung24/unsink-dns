@@ -28,21 +28,33 @@ The application uses the `github.com/kardianos/service` package to run as a syst
 ### Windows
 
 1. Build the executable: `go build -o unsink-dns.exe`
-2. Install the service: `unsink-dns.exe --install`
-3. Start the service: `unsink-dns.exe --start`
-4. Stop the service: `unsink-dns.exe --stop`
-5. Remove the service: `unsink-dns.exe --remove`
+2. Use the provided batch files in the `scripts/` directory (run as Administrator or they will prompt):
+   - Install: `scripts\install.bat`
+   - Start: `scripts\start.bat`
+   - Stop: `scripts\stop.bat`
+   - Remove: `scripts\remove.bat`
 
-Note: You may need to run the commands as Administrator.
+Alternatively, manual commands:
+- Install: `unsink-dns.exe --install`
+- Start: `unsink-dns.exe --start`
+- Stop: `unsink-dns.exe --stop`
+- Remove: `unsink-dns.exe --remove`
 
 ### Linux
 
 1. Build the executable: `GOOS=linux GOARCH=amd64 go build -o unsink-dns`
 2. Copy the binary to `/usr/local/bin/` or a suitable location: `sudo cp unsink-dns /usr/local/bin/`
-3. Install the service: `sudo unsink-dns --install`
-4. Start the service: `sudo unsink-dns --start`
-5. Stop the service: `sudo unsink-dns --stop`
-6. Remove the service: `sudo unsink-dns --remove`
+3. Use the provided shell scripts in the `scripts/` directory (they use sudo):
+   - Install: `./scripts/install.sh`
+   - Start: `./scripts/start.sh`
+   - Stop: `./scripts/stop.sh`
+   - Remove: `./scripts/remove.sh`
+
+Alternatively, manual commands:
+- Install: `sudo unsink-dns --install`
+- Start: `sudo unsink-dns --start`
+- Stop: `sudo unsink-dns --stop`
+- Remove: `sudo unsink-dns --remove`
 
 Note: On Linux, you may need to configure systemd or other init systems if the service package doesn't handle it automatically. The `kardianos/service` package supports systemd on Linux.
 
