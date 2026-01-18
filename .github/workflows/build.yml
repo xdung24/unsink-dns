@@ -20,33 +20,27 @@ jobs:
           - runner: ubuntu-latest
             goos: linux
             goarch: amd64
-            filename: unsinkdns-linux-x64
             ext: ""
           - runner: ubuntu-latest
             goos: linux
             goarch: 386
-            filename: unsinkdns-linux-x86
             ext: ""
           - runner: ubuntu-latest
             goos: linux
             goarch: arm64
-            filename: unsinkdns-linux-arm64
             ext: ""
           - runner: ubuntu-latest
             goos: linux
             goarch: arm
             goarm: '7'
-            filename: unsinkdns-linux-armv7
             ext: ""
           - runner: windows-latest
             goos: windows
             goarch: amd64
-            filename: unsinkdns-windows-x64
             ext: .exe
           - runner: windows-latest
             goos: windows
             goarch: 386
-            filename: unsinkdns-windows-x86
             ext: .exe
     steps:
       - name: Checkout code
@@ -65,15 +59,15 @@ jobs:
           CGO_ENABLED: '0'
           GOARM: ${{ matrix.goarm }}
         run: |
-          out="${{ matrix.filename }}${{ matrix.ext }}"
+          out="unsinkdns${{ matrix.ext }}"
           echo "Building $out (GOOS=$GOOS GOARCH=$GOARCH GOARM=$GOARM)"
           go build -o "$out"
 
       - name: Package (Linux)
         if: matrix.goos == 'linux'
         run: |
-          out="${{ matrix.filename }}${{ matrix.ext }}"
-          tarname="${{ matrix.filename }}.tar.gz"
+          out="unsinkdns${{ matrix.ext }}"
+          tarname="unsinkdns-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz"
           echo "Packaging $tarname (includes .sh files)"
           tar -czf "$tarname" "$out" *.sh
 
@@ -81,8 +75,8 @@ jobs:
         if: matrix.goos == 'windows'
         shell: bash
         run: |
-          out="${{ matrix.filename }}${{ matrix.ext }}"
-          zip="${{ matrix.filename }}.zip"
+          out="unsinkdns${{ matrix.ext }}"
+          zip="unsinkdns-${{ matrix.goos }}-${{ matrix.goarch }}.zip"
           echo "Packaging $zip (includes .bat files)"
           powershell -command "Compress-Archive -Path '$out', '*.bat' -DestinationPath '$zip' -Force"
 
@@ -90,7 +84,7 @@ jobs:
         if: matrix.goos == 'linux'
         uses: softprops/action-gh-release@v1
         with:
-          files: "${{ matrix.filename }}.tar.gz"
+          files: "unsinkdns-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -98,6 +92,6 @@ jobs:
         if: matrix.goos == 'windows'
         uses: softprops/action-gh-release@v1
         with:
-          files: "${{ matrix.filename }}.zip"
+          files: "unsinkdns-${{ matrix.goos }}-${{ matrix.goarch }}.zip"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
