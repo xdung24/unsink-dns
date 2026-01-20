@@ -1,2 +1,2 @@
 #!/bin/bash
-sudo ./unsinkdns --start
+sudo systemctl start unsinkdns.service

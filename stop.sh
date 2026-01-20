@@ -1,2 +1,2 @@
 #!/bin/bash
-sudo ./unsinkdns --stop
+sudo systemctl stop unsinkdns.service
