@@ -174,9 +174,13 @@ func handleDNSRequest(w dns.ResponseWriter, r *dns.Msg) {
 		return
 	}
 
-	// 5. Store in Cache using the lowest TTL found in the answer
+	// 5. Store in Cache using the TTL from the first answer, but enforce a minimum
 	if len(resp.Answer) > 0 {
 		ttl := resp.Answer[0].Header().Ttl
+		minTTL := uint32(300) // Minimum 5 minutes (300 seconds) to reduce upstream load
+		if ttl < minTTL {
+			ttl = minTTL
+		}
 		cacheMutex.Lock()
 		cache[key] = CacheEntry{
 			Msg:    resp,
