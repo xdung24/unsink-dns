@@ -51,6 +51,9 @@ func installService(s service.Service) error {
 		return fmt.Errorf("systemctl enable/start failed: %v: %s", err, string(out))
 	}
 
+	// Add firewall rule to allow UDP port 53
+	_ = exec.Command("ufw", "allow", "53/udp").Run()
+
 	return nil
 }
 
@@ -73,6 +76,9 @@ func removeService(s service.Service) error {
 	if removeErr := os.Remove(dest); removeErr != nil && !os.IsNotExist(removeErr) {
 		return fmt.Errorf("failed to remove binary: %w", removeErr)
 	}
+
+	// Remove firewall rule
+	_ = exec.Command("ufw", "delete", "allow", "53/udp").Run()
 
 	return nil
 }

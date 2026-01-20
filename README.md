@@ -126,4 +126,3 @@ Currently, the upstream server is hardcoded to Cloudflare (1.1.1.1:853). To chan
 
 ## Known issues
 - unsink-dns won't automatic resolve localhost into 127.0.0.1, if you can't connect to localhost, you will need to add `127.0.0.1 localhost` into /etc/hosts or C:\Windows\System32\drivers\etc\hosts
-- If you run app as service, and only localhost can connect to DNS server, that mean the firewall is blocking app. In order to allow other computer to connect to the unsink-dns, you will need to unblock incomning connection in firewall
