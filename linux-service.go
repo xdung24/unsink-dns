@@ -68,5 +68,11 @@ func removeService(s service.Service) error {
 		return fmt.Errorf("systemctl daemon-reload failed: %v: %s", err, string(out))
 	}
 
+	// Remove the copied executable
+	dest := "/usr/local/bin/unsinkdns"
+	if removeErr := os.Remove(dest); removeErr != nil && !os.IsNotExist(removeErr) {
+		return fmt.Errorf("failed to remove binary: %w", removeErr)
+	}
+
 	return nil
 }
