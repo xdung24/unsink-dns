@@ -98,6 +98,22 @@ func loadHosts() {
 }
 
 func handleDNSRequest(w dns.ResponseWriter, r *dns.Msg) {
+	start := time.Now()
+	var upstreamTime time.Duration
+	var queryType string
+	defer func() {
+		if queryType != "" {
+			switch queryType {
+			case "HOSTS":
+				log.Printf("[HOSTS] Resolved: %s (%v ms)", strings.ToLower(r.Question[0].Name), time.Since(start).Milliseconds())
+			case "CACHE":
+				log.Printf("[CACHE] Hit: %s (%v ms)", strings.ToLower(r.Question[0].Name), time.Since(start).Milliseconds())
+			case "PROXY":
+				log.Printf("[PROXY] Querying Upstream: %s took %v ms. (%v ms)", strings.ToLower(r.Question[0].Name), upstreamTime.Milliseconds(), time.Since(start).Milliseconds())
+			}
+		}
+	}()
+
 	// 1. Validate the request
 	if len(r.Question) == 0 {
 		dns.HandleFailed(w, r)
@@ -127,6 +143,7 @@ func handleDNSRequest(w dns.ResponseWriter, r *dns.Msg) {
 		}
 		if len(answers) > 0 {
 			resp.Answer = answers
+			queryType = "HOSTS"
 			w.WriteMsg(resp)
 			return
 		}
@@ -140,16 +157,17 @@ func handleDNSRequest(w dns.ResponseWriter, r *dns.Msg) {
 	cacheMutex.RUnlock()
 
 	if found && time.Now().Before(entry.Expiry) {
-		log.Printf("[CACHE] Hit: %s", r.Question[0].Name)
 		response := entry.Msg.Copy()
 		response.Id = r.Id // Sync ID with the current request
+		queryType = "CACHE"
 		w.WriteMsg(response)
 		return
 	}
 
 	// 4. Forward via TLS if not in cache
-	log.Printf("[PROXY] Querying Upstream: %s", r.Question[0].Name)
+	upstreamStart := time.Now()
 	resp, err := queryUpstreamTLS(r)
+	upstreamTime = time.Since(upstreamStart)
 	if err != nil {
 		log.Printf("[ERROR] Upstream query failed: %v", err)
 		dns.HandleFailed(w, r)
@@ -167,6 +185,7 @@ func handleDNSRequest(w dns.ResponseWriter, r *dns.Msg) {
 		cacheMutex.Unlock()
 	}
 
+	queryType = "PROXY"
 	w.WriteMsg(resp)
 }
 
