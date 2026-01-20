@@ -105,11 +105,11 @@ func handleDNSRequest(w dns.ResponseWriter, r *dns.Msg) {
 		if queryType != "" {
 			switch queryType {
 			case "HOSTS":
-				log.Printf("[HOSTS] Resolved: %s (%v ms)", strings.ToLower(r.Question[0].Name), time.Since(start).Milliseconds())
+				log.Printf("[HOSTS] Resolved: %s %s (%v ms)", strings.ToLower(r.Question[0].Name), dns.TypeToString[r.Question[0].Qtype], time.Since(start).Milliseconds())
 			case "CACHE":
-				log.Printf("[CACHE] Hit: %s (%v ms)", strings.ToLower(r.Question[0].Name), time.Since(start).Milliseconds())
+				log.Printf("[CACHE] Hit: %s %s (%v ms)", strings.ToLower(r.Question[0].Name), dns.TypeToString[r.Question[0].Qtype], time.Since(start).Milliseconds())
 			case "PROXY":
-				log.Printf("[PROXY] Querying Upstream: %s took %v ms. (%v ms)", strings.ToLower(r.Question[0].Name), upstreamTime.Milliseconds(), time.Since(start).Milliseconds())
+				log.Printf("[PROXY] Querying Upstream: %s %s took %v ms. (%v ms)", strings.ToLower(r.Question[0].Name), dns.TypeToString[r.Question[0].Qtype], upstreamTime.Milliseconds(), time.Since(start).Milliseconds())
 			}
 		}
 	}()
@@ -149,7 +149,7 @@ func handleDNSRequest(w dns.ResponseWriter, r *dns.Msg) {
 		}
 	}
 
-	key := fmt.Sprintf("%s-%d", r.Question[0].Name, r.Question[0].Qtype)
+	key := fmt.Sprintf("%s-%d", name, r.Question[0].Qtype)
 
 	// 3. Check Cache
 	cacheMutex.RLock()
@@ -174,16 +174,27 @@ func handleDNSRequest(w dns.ResponseWriter, r *dns.Msg) {
 		return
 	}
 
-	// 5. Store in Cache for successful responses, using TTL from answers or default
-	if resp.Rcode == dns.RcodeSuccess {
-		ttl := uint32(300) // Default 5 minutes for responses with no answers
-		if len(resp.Answer) > 0 {
+	// 5. Store in Cache for successful or NXDOMAIN responses
+	if resp.Rcode == dns.RcodeSuccess || resp.Rcode == dns.RcodeNameError {
+		ttl := uint32(600) // Default 10 minutes
+		if resp.Rcode == dns.RcodeSuccess && len(resp.Answer) > 0 {
 			ttl = resp.Answer[0].Header().Ttl
-			minTTL := uint32(300) // Minimum 5 minutes to reduce upstream load
+			minTTL := uint32(600)
 			if ttl < minTTL {
 				ttl = minTTL
 			}
+		} else if resp.Rcode == dns.RcodeNameError && len(resp.Ns) > 0 {
+			// For NXDOMAIN, use SOA TTL
+			if soa, ok := resp.Ns[0].(*dns.SOA); ok {
+				ttl = soa.Header().Ttl
+				if ttl < 60 {
+					ttl = 60 // Minimum 1 minute for negative responses
+				}
+			} else {
+				ttl = 60
+			}
 		}
+		log.Printf("[CACHE] Store: %s %s with TTL %d", name, dns.TypeToString[r.Question[0].Qtype], ttl)
 		cacheMutex.Lock()
 		cache[key] = CacheEntry{
 			Msg:    resp,
