@@ -1,4 +1,4 @@
-# Unsunk DNS Proxy
+# Unsink DNS Proxy
 
 A DNS-over-TLS proxy server that caches responses and forwards queries to Cloudflare's DNS-over-TLS server.
 
@@ -8,6 +8,46 @@ A DNS-over-TLS proxy server that caches responses and forwards queries to Cloudf
 - Caching with TTL-based expiration
 - Hosts file resolution (reads /etc/hosts on Linux or C:\Windows\System32\drivers\etc\hosts on Windows, including localhost)
 - Runs as a service on Windows and Linux
+
+## Diagram
+
+```text
+Client (UDP:53)
+    |
+    v
+ +-----------------+
+ | Unsink DNS Proxy|
+ | (UDP listener)  |
+ +-----------------+
+    |
+    | handleDNSRequest()
+    |
+    +--> Check hosts file (loadHosts())
+    |       - If name found -> build response from hosts -> return to Client
+    |
+    +--> Check in-memory Cache (key = name-type)
+    |       - If cache hit and not expired -> serve cached response -> return to Client
+    |
+    +--> Cache miss -> Forward query upstream over TLS (DoT)
+                upstreamServer = 1.1.1.1:853
+                serverName    = one.one.one.one
+    |
+    v
+ +----------------------+
+ | Upstream DoT Server  |
+ | (Cloudflare 1.1.1.1) |
+ +----------------------+
+    |
+    v
+ Response (over TLS)
+    |
+    v
+ Unsink DNS Proxy:
+    - receives response
+    - stores entry in cache (uses response TTL for expiry)
+    - returns response to Client (synchronizes request ID)
+```
+
 
 ## Building
 
