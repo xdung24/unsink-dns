@@ -17,6 +17,16 @@ import (
 	"github.com/miekg/dns"
 )
 
+var (
+	cache      = make(map[string]CacheEntry)
+	cacheMutex sync.RWMutex
+	// Using Cloudflare as the Upstream DoT server
+	upstreamServer = "1.1.1.1:853"
+	serverName     = "one.one.one.one"
+	server         *dns.Server
+	hostsMap       map[string][]net.IP
+)
+
 // CacheEntry stores the DNS message and its expiration time
 type CacheEntry struct {
 	Msg    *dns.Msg
@@ -87,93 +97,14 @@ func loadHosts() {
 	}
 }
 
-var (
-	cache      = make(map[string]CacheEntry)
-	cacheMutex sync.RWMutex
-	// Using Cloudflare as the Upstream DoT server
-	upstreamServer = "1.1.1.1:853"
-	serverName     = "one.one.one.one"
-	server         *dns.Server
-	hostsMap       map[string][]net.IP
-)
-
-func main() {
-	install := flag.Bool("install", false, "Install the service")
-	remove := flag.Bool("remove", false, "Remove (uninstall) the service")
-	start := flag.Bool("start", false, "Start the service")
-	stop := flag.Bool("stop", false, "Stop the service")
-	flag.Parse()
-
-	svcConfig := &service.Config{
-		Name:        "UnsunkDNS",
-		DisplayName: "Unsunk DNS Proxy",
-		Description: "DNS-over-TLS Proxy Service",
-	}
-
-	prg := &program{}
-	s, err := service.New(prg, svcConfig)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if *install {
-		err = service.Control(s, "install")
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println("Service installed successfully.")
-		return
-	}
-
-	if *remove {
-		err = service.Control(s, "uninstall")
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println("Service removed successfully.")
-		return
-	}
-
-	if *start {
-		err = service.Control(s, "start")
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println("Service started successfully.")
-		return
-	}
-
-	if *stop {
-		err = service.Control(s, "stop")
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println("Service stopped successfully.")
-		return
-	}
-
-	// If no flags, run the service or handle other args
-	if len(flag.Args()) > 0 {
-		err = service.Control(s, flag.Args()[0])
-		if err != nil {
-			log.Fatal(err)
-		}
-		return
-	}
-
-	err = s.Run()
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 func handleDNSRequest(w dns.ResponseWriter, r *dns.Msg) {
+	// 1. Validate the request
 	if len(r.Question) == 0 {
 		dns.HandleFailed(w, r)
 		return
 	}
 
-	// Check hosts file
+	// 2. Check hosts file
 	name := strings.ToLower(r.Question[0].Name)
 	if ips, ok := hostsMap[name]; ok {
 		resp := new(dns.Msg)
@@ -250,4 +181,76 @@ func queryUpstreamTLS(msg *dns.Msg) (*dns.Msg, error) {
 
 	response, _, err := client.Exchange(msg, upstreamServer)
 	return response, err
+}
+
+func main() {
+	install := flag.Bool("install", false, "Install the service")
+	remove := flag.Bool("remove", false, "Remove (uninstall) the service")
+	start := flag.Bool("start", false, "Start the service")
+	stop := flag.Bool("stop", false, "Stop the service")
+	flag.Parse()
+
+	svcConfig := &service.Config{
+		Name:        "UnsinkDNS",
+		DisplayName: "Unsink DNS Proxy",
+		Description: "DNS-over-TLS Proxy Service",
+	}
+
+	if runtime.GOOS == "windows" {
+		svcConfig.Executable = `C:\Program Files\UnsinkDNS\unsinkdns.exe`
+	}
+
+	prg := &program{}
+	s, err := service.New(prg, svcConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if *install {
+		if err := installService(s); err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("Service installed successfully.")
+		return
+	}
+
+	if *remove {
+		if err := removeService(s); err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("Service removed successfully.")
+		return
+	}
+
+	if *start {
+		err = service.Control(s, "start")
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("Service started successfully.")
+		return
+	}
+
+	if *stop {
+		err = service.Control(s, "stop")
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("Service stopped successfully.")
+		return
+	}
+
+	// If no flags, run the service or handle other args
+	if len(flag.Args()) > 0 {
+		err = service.Control(s, flag.Args()[0])
+		if err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+
+	err = s.Run()
+	if err != nil {
+		log.Fatal(err)
+	}
 }

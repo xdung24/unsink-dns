@@ -61,43 +61,6 @@ go build -o unsinkdns.exe
 GOOS=linux GOARCH=amd64 go build -o unsinkdns
 ```
 
-## Installation as Service
-
-The application uses the `github.com/kardianos/service` package to run as a system service.
-
-### Windows
-
-1. Build the executable: `go build -o unsinkdns.exe`
-2. Use the provided batch files in the `scripts/` directory (run as Administrator or they will prompt):
-   - Install: `scripts\install.bat`
-   - Start: `scripts\start.bat`
-   - Stop: `scripts\stop.bat`
-   - Remove: `scripts\remove.bat`
-
-Alternatively, manual commands:
-- Install: `unsinkdns.exe --install`
-- Start: `unsinkdns.exe --start`
-- Stop: `unsinkdns.exe --stop`
-- Remove: `unsinkdns.exe --remove`
-
-### Linux
-
-1. Build the executable: `GOOS=linux GOARCH=amd64 go build -o unsinkdns`
-2. Copy the binary to `/usr/local/bin/` or a suitable location: `sudo cp unsinkdns /usr/local/bin/`
-3. Use the provided shell scripts in the `scripts/` directory (they use sudo):
-   - Install: `./scripts/install.sh`
-   - Start: `./scripts/start.sh`
-   - Stop: `./scripts/stop.sh`
-   - Remove: `./scripts/remove.sh`
-
-Alternatively, manual commands:
-- Install: `sudo unsinkdns --install`
-- Start: `sudo unsinkdns --start`
-- Stop: `sudo unsinkdns --stop`
-- Remove: `sudo unsinkdns --remove`
-
-Note: On Linux, you may need to configure systemd or other init systems if the service package doesn't handle it automatically. The `kardianos/service` package supports systemd on Linux.
-
 ## Running Manually
 
 To run the application manually (not as a service):
@@ -109,6 +72,42 @@ To run the application manually (not as a service):
 Or on Windows: `unsinkdns.exe`
 
 The server will listen on UDP port 53.
+
+## Installation as Service
+
+The application uses the `github.com/kardianos/service` package to run as a system service.
+
+### Windows
+
+1. Build the executable: `go build -o unsinkdns.exe`
+2. Use the provided batch files (run as Administrator or they will prompt):
+   - Install: `install.bat`
+   - Start: `start.bat`
+   - Stop: `stop.bat`
+   - Remove: `remove.bat`
+
+Alternatively, manual commands:
+- Install: `unsinkdns.exe --install`
+- Start: `unsinkdns.exe --start`
+- Stop: `unsinkdns.exe --stop`
+- Remove: `unsinkdns.exe --remove`
+
+### Linux
+
+1. Build the executable: `GOOS=linux GOARCH=amd64 go build -o unsinkdns`
+2. Copy the binary to `/usr/local/bin/` or a suitable location: `sudo cp unsinkdns /usr/local/bin/`
+3. Use the provided shell scripts (they use sudo):
+   - Install: `./install.sh`
+   - Start: `./start.sh`
+   - Stop: `./stop.sh`
+   - Remove: `./remove.sh`
+
+Alternatively, manual commands:
+- Install: `sudo unsinkdns --install`
+- Start: `sudo unsinkdns --start`
+- Stop: `sudo unsinkdns --stop`
+- Remove: `sudo unsinkdns --remove`
+
 
 ## Configuration
 
